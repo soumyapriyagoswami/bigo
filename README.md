@@ -6,6 +6,24 @@
 [![Zero dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)](#)
 
 > **One function call. Instant Big-O estimate.** No static analysis, no AST tricks — pure empirical measurement.
+---
+
+## Interactive playground
+
+Open **[demo.html](./demo.html)** in your browser for a live visual playground — no Python needed.
+
+- 6 categories: sorting, searching, DP, strings, graph, tricky
+- Runtime growth curve animates point-by-point as analysis runs
+- View source code, architecture diagram, and per-size stats
+- **Custom fn tab** — paste your own function for an instant browser estimate
+
+```bash
+open demo.html       # macOS
+xdg-open demo.html   # Linux
+start demo.html      # Windows
+```
+
+---
 
 ```python
 from bigo_time import analyze
