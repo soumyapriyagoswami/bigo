@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bigo-time — interactive playground</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #ffffff;
+    --bg2:       #f7f6f3;
+    --bg3:       #f0efe9;
+    --border:    rgba(0,0,0,0.10);
+    --border2:   rgba(0,0,0,0.18);
+    --text:      #1a1a18;
+    --text2:     #6b6b67;
+    --text3:     #9e9e9a;
+    --mono:      'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+    --sans:      -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius:    8px;
+    --radius-lg: 12px;
+    --green:     #3B6D11; --green-bg: #EAF3DE; --green-bd: #97C459;
+    --amber:     #854F0B; --amber-bg: #FAEEDA; --amber-bd: #EF9F27;
+    --red:       #A32D2D; --red-bg:   #FCEBEB; --red-bd:   #F09595;
+    --blue:      #185FA5; --blue-bg:  #E6F1FB; --blue-bd:  #85B7EB;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:      #1c1c1a;
+      --bg2:     #242422;
+      --bg3:     #2c2c2a;
+      --border:  rgba(255,255,255,0.10);
+      --border2: rgba(255,255,255,0.18);
+      --text:    #e8e8e4;
+      --text2:   #9a9a96;
+      --text3:   #666662;
+      --green:   #97C459; --green-bg: #173404; --green-bd: #3B6D11;
+      --amber:   #EF9F27; --amber-bg: #412402; --amber-bd: #854F0B;
+      --red:     #F09595; --red-bg:   #501313; --red-bd:   #A32D2D;
+      --blue:    #85B7EB; --blue-bg:  #042C53; --blue-bd:  #185FA5;
+    }
+  }
+
+  html { font-family: var(--sans); background: var(--bg3); color: var(--text); }
+  body { max-width: 900px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+  /* ── top bar ── */
+  .topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+  .topbar-title { font-family: var(--mono); font-size: 17px; font-weight: 500; }
+  .pill { font-size: 11px; padding: 3px 9px; border-radius: 20px; border: 0.5px solid var(--border2); color: var(--text2); font-family: var(--mono); background: var(--bg2); }
+
+  /* ── cards ── */
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 12px; }
+  .card-label { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); padding: 10px 16px 6px; font-family: var(--sans); }
+
+  /* ── func grid ── */
+  .func-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 0; background: var(--border); border-top: 0.5px solid var(--border); }
+  .func-btn { background: var(--bg); padding: 13px 14px; cursor: pointer; border: none; text-align: left; transition: background .12s; }
+  .func-btn:hover  { background: var(--bg2); }
+  .func-btn.active { background: var(--bg2); }
+  .fn-name  { font-family: var(--mono); font-size: 13px; color: var(--text); }
+  .fn-label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .fn-badge { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 4px; margin-top: 5px; border: 0.5px solid; }
+  .badge-g  { color: var(--green); background: var(--green-bg); border-color: var(--green-bd); }
+  .badge-a  { color: var(--amber); background: var(--amber-bg); border-color: var(--amber-bd); }
+  .badge-r  { color: var(--red);   background: var(--red-bg);   border-color: var(--red-bd);   }
+
+  /* ── tabs ── */
+  .tab-bar  { display: flex; border-bottom: 0.5px solid var(--border); background: var(--bg); }
+  .tab-btn  { padding: 10px 18px; font-size: 13px; cursor: pointer; color: var(--text2); background: none; border: none; border-bottom: 2px solid transparent; transition: color .12s; }
+  .tab-btn:hover  { color: var(--text); }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--text); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── chart ── */
+  .chart-wrap { padding: 20px 16px 8px; background: var(--bg); }
+  canvas { width: 100%; height: 240px; display: block; }
+
+  /* ── result row ── */
+  .result-row { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-top: 0.5px solid var(--border); background: var(--bg); }
+  .result-notation { font-family: var(--mono); font-size: 22px; font-weight: 500; min-width: 110px; }
+  .result-meta { font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .conf-badge { font-size: 11px; font-family: var(--mono); padding: 2px 9px; border-radius: 4px; border: 0.5px solid; margin-left: auto; }
+
+  /* ── terminal ── */
+  .terminal { font-family: var(--mono); font-size: 12px; line-height: 1.9; padding: 14px 16px; background: var(--bg2); color: var(--text); overflow-x: auto; white-space: pre; }
+  .t-dim    { color: var(--text3); }
+  .t-green  { color: var(--green); }
+  .t-amber  { color: var(--amber); }
+  .t-red    { color: var(--red); }
+  .t-blue   { color: var(--blue); }
+  .t-bold   { font-weight: 600; color: var(--text); }
+
+  /* ── run button ── */
+  .run-btn { display: block; width: 100%; padding: 11px; font-family: var(--mono); font-size: 13px; cursor: pointer; color: var(--text); background: var(--bg); border: none; border-top: 0.5px solid var(--border); transition: background .12s; }
+  .run-btn:hover    { background: var(--bg2); }
+  .run-btn:active   { background: var(--bg3); }
+  .run-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ── code view ── */
+  .code-wrap { padding: 0; }
+  .code-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 0.5px solid var(--border); background: var(--bg); }
+  .code-filename { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+  .copy-btn { font-size: 11px; padding: 3px 10px; border: 0.5px solid var(--border2); border-radius: 4px; background: var(--bg2); cursor: pointer; color: var(--text2); font-family: var(--mono); transition: background .1s; }
+  .copy-btn:hover { background: var(--bg3); }
+
+  /* ── arch view ── */
+  .arch-wrap { padding: 16px; background: var(--bg2); }
+
+  /* ── sizes row ── */
+  .sizes-row { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 16px; background: var(--bg); border-top: 0.5px solid var(--border); }
+  .size-chip { font-family: var(--mono); font-size: 11px; padding: 2px 8px; background: var(--bg2); border: 0.5px solid var(--border); border-radius: 4px; color: var(--text2); }
+
+  /* ── stats row ── */
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--border); border-top: 0.5px solid var(--border); }
+  .stat-cell { background: var(--bg); padding: 10px 14px; }
+  .stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 3px; }
+  .stat-val   { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--text); }
+
+  /* ── custom fn editor ── */
+  .editor-wrap { padding: 16px; background: var(--bg); }
+  .editor-wrap textarea { width: 100%; height: 140px; font-family: var(--mono); font-size: 12px; background: var(--bg2); color: var(--text); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 10px 12px; resize: vertical; line-height: 1.6; }
+  .editor-wrap textarea:focus { outline: none; border-color: var(--blue-bd); }
+  .editor-controls { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+  .editor-hint { font-size: 11px; color: var(--text3); margin-left: auto; }
+  .btn-small { font-size: 12px; padding: 5px 14px; border: 0.5px solid var(--border2); border-radius: 4px; background: var(--bg2); cursor: pointer; color: var(--text); font-family: var(--mono); transition: background .1s; }
+  .btn-small:hover { background: var(--bg3); }
+
+  /* ── section nav ── */
+  .section-nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .sec-btn { font-size: 12px; padding: 5px 14px; border: 0.5px solid var(--border2); border-radius: 20px; background: var(--bg2); cursor: pointer; color: var(--text2); font-family: var(--mono); transition: all .12s; }
+  .sec-btn:hover  { color: var(--text); border-color: var(--text3); }
+  .sec-btn.active { color: var(--text); background: var(--bg3); border-color: var(--text3); }
+
+  /* ── tooltip ── */
+  .tooltip { position: absolute; background: var(--bg); border: 0.5px solid var(--border2); border-radius: 6px; padding: 5px 9px; font-size: 11px; font-family: var(--mono); color: var(--text); pointer-events: none; white-space: nowrap; z-index: 10; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-title">$ bigo-time</span>
+  <span class="pill">v0.1.2</span>
+  <span class="pill">zero deps</span>
+  <span class="pill">pure stdlib</span>
+  <span style="margin-left:auto;font-size:12px;color:var(--text3)">interactive playground</span>
+</div>
+
+<div class="section-nav" id="section-nav"></div>
+
+<div class="card" id="func-card">
+  <div class="card-label">select function to analyse</div>
+  <div class="func-grid" id="func-grid"></div>
+</div>
+
+<div class="card">
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('sim',this)">simulation</button>
+    <button class="tab-btn" onclick="switchTab('src',this)">source</button>
+    <button class="tab-btn" onclick="switchTab('arch',this)">architecture</button>
+    <button class="tab-btn" onclick="switchTab('custom',this)">custom fn</button>
+  </div>
+
+  <div class="tab-pane active" id="tab-sim">
+    <div class="chart-wrap" style="position:relative">
+      <canvas id="chart" height="240"></canvas>
+      <div class="tooltip" id="tooltip" style="display:none"></div>
+    </div>
+    <div class="result-row" id="result-row">
+      <span class="result-notation" id="r-notation" style="color:var(--text3)">—</span>
+      <div class="result-meta" id="r-meta">select a function above, then press run</div>
+      <span class="conf-badge" id="r-conf" style="display:none"></span>
+    </div>
+    <div class="terminal" id="terminal"><span class="t-dim"># output will appear here after running</span></div>
+    <div class="sizes-row" id="sizes-row"><span style="font-size:11px;color:var(--text3);font-family:var(--mono)">input sizes will appear here</span></div>
+    <div class="stats-row" id="stats-row">
+      <div class="stat-cell"><div class="stat-label">complexity</div><div class="stat-val" id="s-complexity">—</div></div>
+      <div class="stat-cell"><div class="stat-label">R² score</div><div class="stat-val" id="s-r2">—</div></div>
+      <div class="stat-cell"><div class="stat-label">data points</div><div class="stat-val" id="s-pts">—</div></div>
+      <div class="stat-cell"><div class="stat-label">confidence</div><div class="stat-val" id="s-conf">—</div></div>
+    </div>
+    <button class="run-btn" id="run-btn" onclick="runAnalysis()">▶  analyze( selected_func )</button>
+  </div>
+
+  <div class="tab-pane" id="tab-src">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-filename" id="src-filename">no function selected</span>
+        <button class="copy-btn" onclick="copySource()">copy</button>
+      </div>
+      <div class="terminal" id="src-display"><span class="t-dim"># select a function to view its source</span></div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="tab-arch">
+    <div class="arch-wrap">
+      <div class="terminal" style="background:var(--bg2);padding:0">
+<span class="t-dim">┌──────────────────────────────────────────────────┐</span>
+<span class="t-dim">│</span>                                                   <span class="t-dim">│</span>
+<span class="t-dim">│</span>   <span class="t-blue">from bigo_time import analyze</span>                   <span class="t-dim">│</span>
+<span class="t-dim">│</span>                                                   <span class="t-dim">│</span>
+<span class="t-dim">│</span>   <span class="t-bold">analyze(func)</span>  ─────────────────────────────── <span class="t-dim">│</span>
+<span class="t-dim">│</span>        │                                          <span class="t-dim">│</span>
+<span class="t-dim">│</span>        ▼                                          <span class="t-dim">│</span>
+<span class="t-dim">│</span>   <span class="t-green">sniff_generator()</span>  ── inspect annotations       <span class="t-dim">│</span>
+<span class="t-dim">│</span>        │  list / int / str / dict / matrix         <span class="t-dim">│</span>
+<span class="t-dim">│</span>        ▼                                          <span class="t-dim">│</span>
+<span class="t-dim">│</span>   <span class="t-amber">default_sizes()</span>   ── 15 log-spaced n values     <span class="t-dim">│</span>
+<span class="t-dim">│</span>        │  10 → 16 → 25 → 40 → ... → 6974          <span class="t-dim">│</span>
+<span class="t-dim">│</span>        ▼                                          <span class="t-dim">│</span>
+<span class="t-dim">│</span>   <span class="t-blue">measure()</span>  ── runner.py                         <span class="t-dim">│</span>
+<span class="t-dim">│</span>   ├─ calibrate_inner()  fast fn? auto-loop more   <span class="t-dim">│</span>
+<span class="t-dim">│</span>   ├─ 7× outer repeats   noise averaging            <span class="t-dim">│</span>
+<span class="t-dim">│</span>   ├─ trim outliers       drop min + max            <span class="t-dim">│</span>
+<span class="t-dim">│</span>   └─ early stop          blowup guard (3s/30s)     <span class="t-dim">│</span>
+<span class="t-dim">│</span>        ▼                                          <span class="t-dim">│</span>
+<span class="t-dim">│</span>   <span class="t-green">fit_complexity()</span>  ── least-squares, 8 models    <span class="t-dim">│</span>
+<span class="t-dim">│</span>   ├─ O(1)  O(log n)  O(n)  O(n log n)             <span class="t-dim">│</span>
+<span class="t-dim">│</span>   └─ O(n²)  O(n³)  O(n⁴)  O(2ⁿ)                  <span class="t-dim">│</span>
+<span class="t-dim">│</span>        ▼                                          <span class="t-dim">│</span>
+<span class="t-dim">│</span>   <span class="t-amber">AnalysisResult</span>                                  <span class="t-dim">│</span>
+<span class="t-dim">│</span>   ├─ .complexity.notation   "O(n log n)"          <span class="t-dim">│</span>
+<span class="t-dim">│</span>   ├─ .r_squared             0.9994                <span class="t-dim">│</span>
+<span class="t-dim">│</span>   └─ .confidence            "high"                <span class="t-dim">│</span>
+<span class="t-dim">│</span>                                                   <span class="t-dim">│</span>
+<span class="t-dim">└──────────────────────────────────────────────────┘</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="tab-custom">
+    <div class="editor-wrap">
+      <div class="terminal" style="font-size:11px;padding:8px 12px;margin-bottom:8px;background:var(--bg2);border-radius:var(--radius)"><span class="t-dim"># paste any Python function below. bigo-time will simulate its growth curve.</span></div>
+      <textarea id="custom-code" spellcheck="false">def my_function(arr):
+    # your function here
+    total = 0
+    for i in range(len(arr)):
+        for j in range(i, len(arr)):
+            total += arr[i] + arr[j]
+    return total</textarea>
+      <div class="editor-controls">
+        <button class="btn-small" onclick="loadCustom()">▶  simulate this function</button>
+        <span class="editor-hint">simulation runs in-browser — actual timing uses Python</span>
+      </div>
+    </div>
+    <div class="terminal" id="custom-output"><span class="t-dim"># parsed function will appear here</span></div>
+  </div>
+</div>
+
+<script>
+const SECTIONS = {
+  sorting: {
+    label: 'sorting',
+    funcs: [
+      { id:'builtin',   name:'sorted(arr)',    label:'python timsort',  notation:'O(n log n)', badge:'a',
+        src:`def builtin_sort(arr):\n    return sorted(arr)`,
+        runner: n => n * Math.log2(Math.max(n,1)) },
+      { id:'merge',     name:'merge_sort()',   label:'divide & conquer',notation:'O(n log n)', badge:'a',
+        src:`def merge_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    mid = len(arr) // 2\n    left  = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])\n    result, i, j = [], 0, 0\n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]: result.append(left[i]); i += 1\n        else: result.append(right[j]); j += 1\n    return result + left[i:] + right[j:]`,
+        runner: n => n * Math.log2(Math.max(n,1)) },
+      { id:'insertion', name:'insertion_sort()',label:'inner shift loop', notation:'O(n²)',     badge:'r',
+        src:`def insertion_sort(arr):\n    a = arr[:]\n    for i in range(1, len(a)):\n        key = a[i]\n        j = i - 1\n        while j >= 0 and a[j] > key:\n            a[j+1] = a[j]; j -= 1\n        a[j+1] = key\n    return a`,
+        runner: n => n * n },
+      { id:'selection', name:'selection_sort()',label:'find min each pass',notation:'O(n²)',    badge:'r',
+        src:`def selection_sort(arr):\n    a = arr[:]\n    for i in range(len(a)):\n        mi = i\n        for j in range(i+1, len(a)):\n            if a[j] < a[mi]: mi = j\n        a[i], a[mi] = a[mi], a[i]\n    return a`,
+        runner: n => n * n },
+    ]
+  },
+  searching: {
+    label: 'searching',
+    funcs: [
+      { id:'linear',  name:'linear_search()', label:'scan every element',notation:'O(n)',     badge:'a',
+        src:`def linear_search(arr):\n    target = arr[-1]  # worst case\n    for i, v in enumerate(arr):\n        if v == target: return i\n    return -1`,
+        runner: n => n },
+      { id:'binary',  name:'binary_search()', label:'halve search space', notation:'O(log n)',badge:'g',
+        src:`def binary_search(arr):\n    target = arr[len(arr) // 2]\n    lo, hi = 0, len(arr) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == target:  return mid\n        elif arr[mid] < target: lo = mid + 1\n        else:                   hi = mid - 1\n    return -1`,
+        runner: n => Math.log2(Math.max(n,1)) },
+      { id:'findmax', name:'find_max()',        label:'single linear pass',notation:'O(n)',    badge:'a',
+        src:`def find_max(arr):\n    return max(arr)`,
+        runner: n => n },
+      { id:'twosum',  name:'find_two_sum()',    label:'hash map lookup',  notation:'O(n)',     badge:'a',
+        src:`def find_two_sum(arr):\n    target = arr[0] + arr[-1]\n    seen = {}\n    for i, v in enumerate(arr):\n        if target - v in seen: return (seen[target-v], i)\n        seen[v] = i\n    return None`,
+        runner: n => n },
+    ]
+  },
+  dp: {
+    label: 'dynamic programming',
+    funcs: [
+      { id:'fib',  name:'fibonacci_dp()',  label:'iterative O(n)',    notation:'O(n)',  badge:'a',
+        src:`def fibonacci_dp(n):\n    if n <= 1: return n\n    a, b = 0, 1\n    for _ in range(n - 1): a, b = b, a + b\n    return b`,
+        runner: n => n },
+      { id:'kadane',name:'max_subarray()',  label:"kadane's algorithm", notation:'O(n)',  badge:'a',
+        src:`def max_subarray(arr):\n    max_sum = cur = arr[0]\n    for v in arr[1:]:\n        cur = max(v, cur + v)\n        max_sum = max(max_sum, cur)\n    return max_sum`,
+        runner: n => n },
+      { id:'lcs',  name:'lcs()',           label:'2-d dp table',      notation:'O(n²)', badge:'r',
+        src:`def longest_common_subseq(pair):\n    a, b = pair\n    m, n = len(a), len(b)\n    dp = [[0]*(n+1) for _ in range(m+1)]\n    for i in range(1, m+1):\n        for j in range(1, n+1):\n            if a[i-1] == b[j-1]: dp[i][j] = dp[i-1][j-1] + 1\n            else: dp[i][j] = max(dp[i-1][j], dp[i][j-1])\n    return dp[m][n]`,
+        runner: n => n * n },
+      { id:'lis',  name:'lis()',           label:'nested loop dp',    notation:'O(n²)', badge:'r',
+        src:`def longest_increasing_subseq(arr):\n    if not arr: return 0\n    dp = [1] * len(arr)\n    for i in range(1, len(arr)):\n        for j in range(i):\n            if arr[j] < arr[i]:\n                dp[i] = max(dp[i], dp[j] + 1)\n    return max(dp)`,
+        runner: n => n * n },
+    ]
+  },
+  strings: {
+    label: 'strings',
+    funcs: [
+      { id:'charfreq',name:'count_chars()',       label:'freq map',         notation:'O(n)',  badge:'a',
+        src:`def count_chars(s):\n    freq = {}\n    for c in s: freq[c] = freq.get(c,0) + 1\n    return freq`,
+        runner: n => n },
+      { id:'palindrome',name:'is_palindrome()',   label:'reverse compare', notation:'O(n)',  badge:'a',
+        src:`def is_palindrome(s):\n    return s == s[::-1]`,
+        runner: n => n },
+      { id:'sliding',name:'longest_unique()',     label:'sliding window',  notation:'O(n)',  badge:'a',
+        src:`def longest_unique_substr(s):\n    start, max_len = 0, 0\n    seen = {}\n    for i, c in enumerate(s):\n        if c in seen and seen[c] >= start:\n            start = seen[c] + 1\n        seen[c] = i\n        max_len = max(max_len, i - start + 1)\n    return max_len`,
+        runner: n => n },
+      { id:'naivesub',name:'naive_substr_count()',label:'all substrings',   notation:'O(n²)', badge:'r',
+        src:`def naive_substr_count(s):\n    subs = set()\n    for i in range(len(s)):\n        for j in range(i+1, min(i+50, len(s))+1):\n            subs.add(s[i:j])\n    return len(subs)`,
+        runner: n => n * n },
+    ]
+  },
+  tricky: {
+    label: 'tricky',
+    funcs: [
+      { id:'append',  name:'list_append()',     label:'amortised O(1)',  notation:'O(n)',  badge:'a',
+        src:`def dynamic_array_append(n):\n    # list.append is O(1) amortised\n    lst = []\n    for i in range(n): lst.append(i)\n    return lst`,
+        runner: n => n },
+      { id:'strconcat',name:'str_concat()',     label:'hidden O(n²)',    notation:'O(n²)', badge:'r',
+        src:`def string_concat_loop(n):\n    # += builds a NEW string each iteration\n    # looks O(n) but is O(n²) total work!\n    s = ""\n    for i in range(n): s += "x"\n    return s`,
+        runner: n => n * n },
+      { id:'strjoin', name:'str_join()',        label:'"".join is O(n)', notation:'O(n)',  badge:'a',
+        src:`def string_join(n):\n    # join pre-allocates once — always linear\n    return "".join(["x"] * n)`,
+        runner: n => n },
+      { id:'setmem',  name:'set_lookup()',      label:'O(1) membership', notation:'O(1)',  badge:'g',
+        src:`def membership_set(pair):\n    s, queries = pair\n    return [q in s for q in queries]`,
+        runner: n => 1 },
+      { id:'listmem', name:'list_lookup()',     label:'O(n) membership', notation:'O(n)',  badge:'a',
+        src:`def membership_list(pair):\n    lst, queries = pair\n    return [q in lst for q in queries]`,
+        runner: n => n },
+    ]
+  },
+  graph: {
+    label: 'graph',
+    funcs: [
+      { id:'bfs', name:'bfs()',  label:'breadth-first search',notation:'O(n)', badge:'a',
+        src:`def bfs(graph_tuple):\n    n, g = graph_tuple\n    visited = set()\n    queue   = deque([0])\n    visited.add(0)\n    while queue:\n        node = queue.popleft()\n        for nb in g.get(node, []):\n            if nb not in visited:\n                visited.add(nb)\n                queue.append(nb)\n    return len(visited)`,
+        runner: n => n },
+      { id:'dfs', name:'dfs()',  label:'depth-first search',  notation:'O(n)', badge:'a',
+        src:`def dfs(graph_tuple):\n    n, g = graph_tuple\n    visited = set()\n    stack   = [0]\n    while stack:\n        node = stack.pop()\n        if node in visited: continue\n        visited.add(node)\n        stack.extend(g.get(node, []))\n    return len(visited)`,
+        runner: n => n },
+      { id:'matrix_mul', name:'matrix_mul()', label:'triple nested loop', notation:'O(n³)', badge:'r',
+        src:`def matrix_multiply(matrix):\n    n   = len(matrix)\n    res = [[0]*n for _ in range(n)]\n    for i in range(n):\n        for j in range(n):\n            for k in range(n):\n                res[i][j] += matrix[i][k] * matrix[k][j]\n    return res`,
+        runner: n => n * n * n },
+    ]
+  },
+};
+
+const ALL_FUNCS = Object.values(SECTIONS).flatMap(s => s.funcs);
+let selected = null;
+let animRaf = null;
+let chartData = { sizes:[], times:[], color:'#639922', label:'O(n)' };
+
+function colorFor(badge) {
+  return badge==='g' ? '#639922' : badge==='a' ? '#BA7517' : '#E24B4A';
+}
+
+function buildNav() {
+  const nav = document.getElementById('section-nav');
+  Object.entries(SECTIONS).forEach(([key, sec], i) => {
+    const btn = document.createElement('button');
+    btn.className = 'sec-btn' + (i===0 ? ' active' : '');
+    btn.textContent = sec.label;
+    btn.onclick = () => {
+      document.querySelectorAll('.sec-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      buildGrid(key);
+    };
+    nav.appendChild(btn);
+  });
+}
+
+function buildGrid(sectionKey) {
+  const grid = document.getElementById('func-grid');
+  grid.innerHTML = '';
+  const sec = SECTIONS[sectionKey];
+  sec.funcs.forEach(f => {
+    const btn = document.createElement('div');
+    btn.className = 'func-btn' + (selected && selected.id === f.id ? ' active' : '');
+    btn.id = 'fb-' + f.id;
+    btn.onclick = () => selectFunc(f);
+    btn.innerHTML = `<div class="fn-name">${f.name}</div><div class="fn-label">${f.label}</div><span class="fn-badge badge-${f.badge}">${f.notation}</span>`;
+    grid.appendChild(btn);
+  });
+}
+
+function selectFunc(f) {
+  document.querySelectorAll('.func-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('fb-' + f.id);
+  if (btn) btn.classList.add('active');
+  selected = f;
+
+  document.getElementById('src-filename').textContent = f.id + '.py';
+  document.getElementById('src-display').innerHTML = syntaxHL(f.src);
+
+  document.getElementById('r-notation').textContent = '—';
+  document.getElementById('r-notation').style.color = 'var(--text3)';
+  document.getElementById('r-meta').textContent = f.label + '  ·  ' + f.name;
+  document.getElementById('r-conf').style.display = 'none';
+  document.getElementById('terminal').innerHTML = `<span class="t-dim"># press ▶  to simulate ${f.name}</span>`;
+  document.getElementById('sizes-row').innerHTML = `<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">run to see sizes</span>`;
+  document.getElementById('s-complexity').textContent = '—';
+  document.getElementById('s-r2').textContent = '—';
+  document.getElementById('s-pts').textContent = '—';
+  document.getElementById('s-conf').textContent = '—';
+
+  const SIZES = [10,16,25,40,64,102,163,260,416,666,1065,1703,2725,4359,6974];
+  const useN = f.id === 'matrix_mul' ? 8 : f.id === 'insertion' || f.id === 'selection' || f.id === 'lcs' || f.id === 'lis' || f.id === 'naivesub' || f.id === 'strconcat' ? 11 : 15;
+  const sizes = SIZES.slice(0, useN);
+  const raw = sizes.map(n => f.runner(n));
+  const maxR = Math.max(...raw) || 1;
+  const times = raw.map(r => (r / maxR) * 0.003);
+  chartData = { sizes, times, color: colorFor(f.badge), label: f.notation };
+  drawChart(sizes, times, colorFor(f.badge), f.notation, 1);
+}
+
+function syntaxHL(src) {
+  const kwds = ['def','return','if','else','elif','for','while','in','range','len','sorted','sum','max','min','set','list','dict'];
+  let h = src.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  h = h.replace(/(#[^\n]*)/g,'<span class="t-dim">$1</span>');
+  h = h.replace(new RegExp(`\\b(${kwds.join('|')})\\b`,'g'),'<span class="t-amber">$1</span>');
+  h = h.replace(/\b(\d+)\b/g,'<span class="t-green">$1</span>');
+  h = h.replace(/(["'][^"']*["'])/g,'<span class="t-green">$1</span>');
+  return h;
+}
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+function drawChart(sizes, times, color, label, progress) {
+  const canvas = document.getElementById('chart');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth || 860;
+  const H = 240;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const isDark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const gc = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const tc = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
+  const ac = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)';
+
+  const pad = { l:50, r:40, t:16, b:36 };
+  ctx.clearRect(0, 0, W, H);
+
+  const maxT = Math.max(...times) * 1.12 || 0.001;
+  const maxN = Math.max(...sizes);
+
+  const toX = n  => pad.l + (Math.log(n+1) / Math.log(maxN+1)) * (W - pad.l - pad.r);
+  const toY = t  => pad.t + (1 - t / maxT) * (H - pad.t - pad.b);
+
+  ctx.font = `10px ${getComputedStyle(document.body).getPropertyValue('--mono') || 'monospace'}`;
+  ctx.fillStyle = tc;
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + i * (H - pad.t - pad.b) / 4;
+    ctx.strokeStyle = gc; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+    const val = maxT * (1 - i / 4) * 1000;
+    const label_t = val < 0.01 ? val.toFixed(4) : val < 1 ? val.toFixed(3) : val.toFixed(2);
+    ctx.fillText(label_t + 'ms', pad.l - 4, y + 3.5);
+  }
+
+  ctx.textAlign = 'center';
+  [10, 100, 1000, 5000].forEach(n => {
+    if (n > maxN * 1.1) return;
+    const x = toX(n);
+    ctx.strokeStyle = gc; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, H - pad.b); ctx.stroke();
+    ctx.fillStyle = tc;
+    ctx.fillText(n >= 1000 ? (n/1000) + 'k' : n, x, H - pad.b + 14);
+  });
+
+  ctx.strokeStyle = ac; ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, H - pad.b); ctx.lineTo(W - pad.r, H - pad.b); ctx.stroke();
+
+  const visCount = Math.max(2, Math.floor(sizes.length * (progress || 1)));
+  const pts = sizes.slice(0, visCount).map((n, i) => [toX(n), toY(times[i])]);
+
+  ctx.strokeStyle = color; ctx.lineWidth = 2;
+  ctx.beginPath();
+  pts.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+  ctx.stroke();
+
+  ctx.fillStyle = color;
+  pts.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI*2); ctx.fill(); });
+
+  if (progress >= 1 && pts.length > 0) {
+    const [lx, ly] = pts[pts.length - 1];
+    ctx.font = `11px monospace`; ctx.fillStyle = color; ctx.textAlign = 'left';
+    ctx.fillText(label, Math.min(lx + 7, W - pad.r - 50), ly + 4);
+  }
+}
+
+function runAnalysis() {
+  if (!selected) { alert('Select a function first.'); return; }
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true; btn.textContent = '⏳  analyzing...';
+  if (animRaf) cancelAnimationFrame(animRaf);
+
+  const f = selected;
+  const color = colorFor(f.badge);
+  const SIZES = [10,16,25,40,64,102,163,260,416,666,1065,1703,2725,4359,6974];
+  const useN = f.id==='matrix_mul' ? 8 : ['insertion','selection','lcs','lis','naivesub','strconcat'].includes(f.id) ? 11 : 15;
+  const sizes = SIZES.slice(0, useN);
+
+  const noiseMap = { g:0.30, a:0.09, r:0.05 };
+  const amp = noiseMap[f.badge] || 0.1;
+  const raw = sizes.map(n => f.runner(n));
+  const maxR = Math.max(...raw) || 1;
+  const times = raw.map(r => {
+    const base = (r / maxR) * 0.003;
+    return Math.max(base * (1 + (Math.random() - 0.5) * amp), 5e-7);
+  });
+  const inner = sizes.map((n, i) => Math.max(1, Math.min(10000, Math.round(500 / (times[i] * 1e6 || 1)))));
+
+  const termEl    = document.getElementById('terminal');
+  const sizesEl   = document.getElementById('sizes-row');
+  termEl.innerHTML = `<span class="t-dim">[bigo-time] Analysing '${f.id}' …</span>\n`;
+  sizesEl.innerHTML = '';
+
+  let step = 0;
+  function tick() {
+    if (step >= sizes.length) { finish(); return; }
+    const n = sizes[step], t = times[step], il = inner[step];
+    const ms = (t * 1000).toFixed(4);
+    const sd = (t * 1000 * amp * 0.3).toFixed(4);
+    termEl.innerHTML += `  <span class="t-dim">n=</span><span class="t-bold">${String(n).padStart(7)}</span>  <span class="t-dim">inner=</span><span class="t-green">${String(il).padStart(6)}</span>  <span class="t-dim">avg=</span><span class="t-amber">${ms.padStart(9)} ms</span>  <span class="t-dim">σ=</span><span class="t-dim">${sd} ms</span>\n`;
+    termEl.scrollTop = termEl.scrollHeight;
+    const chip = document.createElement('span');
+    chip.className = 'size-chip';
+    chip.textContent = n >= 1000 ? (n/1000).toFixed(1)+'k' : n;
+    sizesEl.appendChild(chip);
+    drawChart(sizes.slice(0, step+1), times.slice(0, step+1), color, f.notation, 1);
+    step++;
+    animRaf = requestAnimationFrame(() => setTimeout(tick, 55));
+  }
+
+  function finish() {
+    const r2 = (0.986 + Math.random() * 0.013).toFixed(4);
+    const conf = parseFloat(r2) >= 0.99 ? 'high' : 'medium';
+    termEl.innerHTML += `\n<span class="t-dim">────────────────────────────────────────────────────</span>\n`;
+    termEl.innerHTML += `  <span class="t-dim">Estimated complexity :</span> <span class="t-bold">${f.notation}</span>  <span class="t-dim">(${f.label})</span>\n`;
+    termEl.innerHTML += `  <span class="t-dim">R² fit score         :</span> <span class="t-green">${r2}</span>  <span class="t-dim">[${conf} confidence]</span>\n`;
+    termEl.innerHTML += `  <span class="t-dim">Data points used     :</span> <span class="t-bold">${sizes.length}</span>\n`;
+    termEl.innerHTML += `  <span class="t-dim">Outer repeats        :</span> <span class="t-bold">7</span>  <span class="t-dim">(min/max trimmed)</span>\n`;
+    termEl.innerHTML += `<span class="t-dim">────────────────────────────────────────────────────</span>`;
+
+    const notEl = document.getElementById('r-notation');
+    notEl.textContent = f.notation;
+    notEl.style.color = color;
+    document.getElementById('r-meta').textContent = f.label + '  ·  ' + f.id + '()';
+
+    const confEl = document.getElementById('r-conf');
+    confEl.textContent = conf + ' confidence';
+    confEl.style.display = 'inline-block';
+    const cmap = { high: ['var(--green-bg)','var(--green)','var(--green-bd)'], medium: ['var(--amber-bg)','var(--amber)','var(--amber-bd)'], low: ['var(--red-bg)','var(--red)','var(--red-bd)'] };
+    const [cbg, cfg, cbd] = cmap[conf];
+    confEl.style.background = cbg; confEl.style.color = cfg; confEl.style.borderColor = cbd;
+
+    document.getElementById('s-complexity').textContent = f.notation;
+    document.getElementById('s-r2').textContent = r2;
+    document.getElementById('s-pts').textContent = sizes.length;
+    document.getElementById('s-conf').textContent = conf;
+
+    btn.disabled = false; btn.textContent = '▶  analyze( selected_func )';
+  }
+  tick();
+}
+
+function copySource() {
+  if (!selected) return;
+  navigator.clipboard.writeText(selected.src).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'copied!';
+    setTimeout(() => btn.textContent = 'copy', 1500);
+  });
+}
+
+function loadCustom() {
+  const code = document.getElementById('custom-code').value;
+  const outEl = document.getElementById('custom-output');
+  const match = code.match(/def\s+(\w+)\s*\(/);
+  const fname = match ? match[1] : 'unknown_function';
+
+  const loopDepth = (code.match(/^\s*(for|while)\s/gm) || []).length;
+  const notation = loopDepth >= 3 ? 'O(n³)' : loopDepth === 2 ? 'O(n²)' : loopDepth === 1 ? 'O(n)' : 'O(1)';
+  const badgeMap = { 'O(1)':'g','O(n)':'a','O(n²)':'r','O(n³)':'r' };
+  const badge = badgeMap[notation] || 'a';
+
+  outEl.innerHTML = `<span class="t-dim">[bigo-time] parsed function: </span><span class="t-bold">${fname}()</span>\n`;
+  outEl.innerHTML += `<span class="t-dim">detected loop depth : </span><span class="t-green">${loopDepth}</span>\n`;
+  outEl.innerHTML += `<span class="t-dim">estimated complexity: </span><span class="t-bold">${notation}</span>  <span class="t-dim">(browser heuristic — run Python for real analysis)</span>\n\n`;
+  outEl.innerHTML += `<span class="t-dim">to measure exactly:\n\n  pip install bigo-time\n\n  from bigo_time import analyze\n  result = analyze(${fname})\n  print(result.complexity.notation)</span>`;
+
+  const customFunc = {
+    id: 'custom', name: fname + '()', label: 'your function', notation, badge,
+    src: code, runner: notation === 'O(n²)' ? n => n*n : notation === 'O(n³)' ? n => n*n*n : notation === 'O(1)' ? () => 1 : n => n
+  };
+
+  const grid = document.getElementById('func-grid');
+  let customBtn = document.getElementById('fb-custom');
+  if (!customBtn) {
+    customBtn = document.createElement('div');
+    customBtn.id = 'fb-custom';
+    customBtn.className = 'func-btn';
+    grid.appendChild(customBtn);
+  }
+  customBtn.className = 'func-btn active';
+  customBtn.onclick = () => selectFunc(customFunc);
+  customBtn.innerHTML = `<div class="fn-name">${customFunc.name}</div><div class="fn-label">${customFunc.label}</div><span class="fn-badge badge-${badge}">${notation}</span>`;
+
+  selected = customFunc;
+  document.querySelectorAll('.func-btn').forEach(b => b !== customBtn && b.classList.remove('active'));
+}
+
+window.addEventListener('resize', () => {
+  if (chartData.sizes.length > 0) {
+    drawChart(chartData.sizes, chartData.times, chartData.color, chartData.label, 1);
+  }
+});
+
+buildNav();
+buildGrid('sorting');
+selectFunc(SECTIONS.sorting.funcs[0]);
+</script>
+</body>
+</html>
