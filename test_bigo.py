@@ -9,9 +9,9 @@ import pytest
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from bigo import analyze
-from bigo.utils import fit_complexity, default_sizes, sniff_generator, r_squared
-from bigo.models import COMPLEXITY_CLASSES
+from bigo_time import analyze
+from bigo_time.utils import fit_complexity, default_sizes, sniff_generator, r_squared
+from bigo_time.models import COMPLEXITY_CLASSES
 
 
 # ---------------------------------------------------------------------------
@@ -201,7 +201,7 @@ def test_confidence_high():
     sizes = [100, 200, 400, 800, 1600, 3200]
     times = [s * 1e-6 for s in sizes]
     cls, r2 = fit_complexity(sizes, times)
-    from bigo.models import AnalysisResult
+    from bigo_time.models import AnalysisResult
     r = AnalysisResult("f", cls, r2, sizes, times, [[t] for t in times], [1]*len(sizes))
     assert r.confidence == "high"
 
@@ -211,7 +211,7 @@ def test_confidence_low():
     sizes = [10, 20, 40, 80, 160]
     times = [random.random() * 1e-3 for _ in sizes]
     cls, r2 = fit_complexity(sizes, times)
-    from bigo.models import AnalysisResult
+    from bigo_time.models import AnalysisResult
     r = AnalysisResult("f", cls, r2, sizes, times, [[t] for t in times], [1]*len(sizes))
     # Just check the attribute exists and is valid
     assert r.confidence in ("high", "medium", "low")

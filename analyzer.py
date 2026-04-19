@@ -1,7 +1,7 @@
 """
 analyzer.py — Public API for bigo.
 
-    from bigo import analyze
+    from bigo_time import analyze
     result = analyze(my_func)
     print(result)
 """

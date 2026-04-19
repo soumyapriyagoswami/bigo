@@ -1,6 +1,6 @@
-# bigo — Auto Time Complexity Estimator
+# bigo-time — Auto Time Complexity Estimator
 
-[![PyPI version](https://img.shields.io/pypi/v/bigo)](https://pypi.org/project/bigo/)
+[![PyPI version](https://img.shields.io/pypi/v/bigo-time)](https://pypi.org/project/bigo-time/)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)](#)
@@ -8,7 +8,7 @@
 > **One function call. Instant Big-O estimate.** No static analysis, no AST tricks — pure empirical measurement.
 
 ```python
-from bigo import analyze
+from bigo_time import analyze
 
 analyze(my_function)
 ```
@@ -34,7 +34,7 @@ analyze(my_function)
 
 ## How it works
 
-Instead of analysing source code (which is hard and often wrong), `bigo`:
+Instead of analysing source code (which is hard and often wrong), `bigo-time`:
 
 1. **Generates inputs** of geometrically-increasing sizes (`n ≈ 10 → 50 000`)
 2. **Measures runtime** for each size — intelligently averaging out noise
@@ -55,7 +55,7 @@ Instead of analysing source code (which is hard and often wrong), `bigo`:
 ## Installation
 
 ```bash
-pip install bigo
+pip install bigo-time
 ```
 
 No dependencies — pure Python stdlib.
@@ -67,7 +67,7 @@ No dependencies — pure Python stdlib.
 ### Basic
 
 ```python
-from bigo import analyze
+from bigo_time import analyze
 
 def my_sort(lst):
     return sorted(lst)

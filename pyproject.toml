@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bigo-time"
-version = "0.1.1"
+version = "0.1.3"
 description = "Auto Time Complexity Estimator — empirically measure Big-O with one line"
 readme = "README.md"
 license = { text = "MIT" }
-authors = [{ name = "Soumyapriya Goswami" }]
+authors = [{ name = "bigo contributors" }]
 requires-python = ">=3.8"
 keywords = ["big-o", "complexity", "performance", "profiling", "algorithm"]
 classifiers = [
@@ -42,13 +42,13 @@ plot = [
 ]
 
 [project.urls]
-Homepage   = "https://github.com/soumyapriyagoswami/bigo.git"
-Repository = "https://github.com/soumyapriyagoswami/bigo.git"
-
+Homepage   = "https://github.com/your-org/bigo"
+Repository = "https://github.com/your-org/bigo"
+Issues     = "https://github.com/your-org/bigo/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["bigo*"]
+include = ["bigo_time*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
